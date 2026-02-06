@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -13,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 @Composable
 fun AreaTopBar(
     onOpenDrawer: () -> Unit,
-    onNavigateToInfo: () -> Unit
+    onNavigateToVip: () -> Unit
 ) {
     CenterAlignedTopAppBar(
         title = {
@@ -29,8 +30,8 @@ fun AreaTopBar(
             }
         },
         actions = {
-            IconButton(onClick = onNavigateToInfo) {
-                Icon(Icons.Default.Info, contentDescription = "How to Use", tint = MaterialTheme.colorScheme.onPrimary)
+            IconButton(onClick = onNavigateToVip) {
+                Icon(Icons.Default.WorkspacePremium, contentDescription = "VIP", tint = MaterialTheme.colorScheme.onPrimary)
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

@@ -11,6 +11,7 @@ import com.pixeleye.gpsfieldareameasure.ui.navigation.Screen
 import com.pixeleye.gpsfieldareameasure.ui.screens.HowToUseScreen
 import com.pixeleye.gpsfieldareameasure.ui.screens.MainScreen
 import com.pixeleye.gpsfieldareameasure.ui.screens.SavedListScreen
+import com.pixeleye.gpsfieldareameasure.ui.screens.VipScreen
 import com.pixeleye.gpsfieldareameasure.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 
@@ -88,7 +89,7 @@ fun MainApp(viewModel: MainViewModel = viewModel()) {
                                 scope.launch { drawerState.open() }
                             }
                         },
-                        onNavigateToInfo = { navController.navigate(Screen.HowToUse.route) }
+                        onNavigateToVip = { navController.navigate(Screen.Vip.route) }
                     )
                 }
                 composable(Screen.SavedList.route) {
@@ -99,6 +100,11 @@ fun MainApp(viewModel: MainViewModel = viewModel()) {
                 }
                 composable(Screen.HowToUse.route) {
                     HowToUseScreen(
+                        onBack = safeBack
+                    )
+                }
+                composable(Screen.Vip.route) {
+                    VipScreen(
                         onBack = safeBack
                     )
                 }

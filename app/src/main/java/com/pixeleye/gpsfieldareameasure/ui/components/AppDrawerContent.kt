@@ -47,6 +47,12 @@ fun AppDrawerContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         DrawerItem(
+            icon = Icons.Default.Info,
+            label = "How to use",
+            onClick = { onItemSelected("how_to_use") }
+        )
+
+        DrawerItem(
             icon = Icons.Default.List,
             label = "Saved list",
             onClick = { onItemSelected("saved_list") }

@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
-fun MainScreen(viewModel: MainViewModel, onOpenDrawer: () -> Unit, onNavigateToInfo: () -> Unit) {
+fun MainScreen(viewModel: MainViewModel, onOpenDrawer: () -> Unit, onNavigateToVip: () -> Unit) {
     val uiState by viewModel.uiState.collectAsState()
     val haptic = LocalHapticFeedback.current
 
@@ -200,7 +200,7 @@ fun MainScreen(viewModel: MainViewModel, onOpenDrawer: () -> Unit, onNavigateToI
     BottomSheetScaffold(
             scaffoldState = scaffoldState,
             topBar = {
-                AreaTopBar(onOpenDrawer = onOpenDrawer, onNavigateToInfo = onNavigateToInfo)
+                AreaTopBar(onOpenDrawer = onOpenDrawer, onNavigateToVip = onNavigateToVip)
             },
             sheetContent = {
                 ResultSheet(
