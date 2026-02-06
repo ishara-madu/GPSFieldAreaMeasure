@@ -63,7 +63,7 @@ fun MainApp(viewModel: MainViewModel = viewModel()) {
                         }
                         "privacy" -> {
                             val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, 
-                                android.net.Uri.parse("https://pixeleye.com/privacy-policy")) // Example URL
+                                android.net.Uri.parse("https://ishara-madu.github.io/GPSFieldAreaMeasure")) // Example URL
                             context.startActivity(intent)
                         }
                     }
