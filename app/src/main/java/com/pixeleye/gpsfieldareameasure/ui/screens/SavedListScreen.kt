@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import com.pixeleye.gpsfieldareameasure.utils.FormatUtils
 import com.pixeleye.gpsfieldareameasure.model.MeasurementUnit
+import com.pixeleye.gpsfieldareameasure.ui.components.BannerAdView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,75 +49,78 @@ fun SavedListScreen(
             )
         }
     ) { padding ->
-        if (history.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("No saved measurements yet.", style = MaterialTheme.typography.bodyLarge)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(history.size) { index ->
-                    val item = history[index]
-                    Card(
-                        onClick = {
-                            viewModel.loadMeasurement(item)
-                            onBack()
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(IntrinsicSize.Min)
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (history.isEmpty()) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("No saved measurements yet.", style = MaterialTheme.typography.bodyLarge)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(history.size) { index ->
+                        val item = history[index]
+                        Card(
+                            onClick = {
+                                viewModel.loadMeasurement(item)
+                                onBack()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            // Map Preview (Canvas)
-                            PolygonPreview(
-                                pointsJson = item.pointsJson,
-                                gson = gson,
+                            Row(
                                 modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.primaryContainer)
-                            )
-
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = item.name,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    .fillMaxWidth()
+                                    .height(IntrinsicSize.Min)
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Map Preview (Canvas)
+                                PolygonPreview(
+                                    pointsJson = item.pointsJson,
+                                    gson = gson,
+                                    modifier = Modifier
+                                        .size(80.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(MaterialTheme.colorScheme.primaryContainer)
                                 )
-                                Text(
-                                    text = FormatUtils.formatArea(item.area, MeasurementUnit.valueOf(item.unit)),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
 
-                            IconButton(onClick = { viewModel.deleteMeasurement(item) }) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = "Delete",
-                                    tint = Color.Red.copy(alpha = 0.7f)
-                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = item.name,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = FormatUtils.formatArea(item.area, MeasurementUnit.valueOf(item.unit)),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+
+                                IconButton(onClick = { viewModel.deleteMeasurement(item) }) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Delete",
+                                        tint = Color.Red.copy(alpha = 0.7f)
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+            BannerAdView()
         }
     }
 }

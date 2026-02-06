@@ -97,4 +97,7 @@ dependencies {
 
     // DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // AdMob
+    implementation("com.google.android.gms:play-services-ads:23.0.0")
 }

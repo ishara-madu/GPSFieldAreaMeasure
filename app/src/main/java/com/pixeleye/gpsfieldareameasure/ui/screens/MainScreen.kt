@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import android.app.Activity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -46,7 +47,8 @@ fun MainScreen(viewModel: MainViewModel, onOpenDrawer: () -> Unit, onNavigateToI
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val applicationContext = LocalContext.current.applicationContext
+    val context = LocalContext.current
+    val applicationContext = context.applicationContext
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(applicationContext)
     }
@@ -79,6 +81,12 @@ fun MainScreen(viewModel: MainViewModel, onOpenDrawer: () -> Unit, onNavigateToI
                     viewModel.saveMeasurement(name)
                     showSaveDialog = false
                     saveName = ""
+                    
+                    // Show interstitial ad
+                    (applicationContext as? Activity ?: (context as? Activity))?.let { activity ->
+                        InterstitialAdManager.showAd(activity)
+                    }
+
                     scope.launch {
                         snackbarHostState.showSnackbar(
                                 message = "Measurement saved!",
@@ -215,207 +223,205 @@ fun MainScreen(viewModel: MainViewModel, onOpenDrawer: () -> Unit, onNavigateToI
             containerColor = MaterialTheme.colorScheme.background, // Match theme background
             snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(top = paddingValues.calculateTopPadding())) {
-            // Map
-            MapContent(
-                    points = uiState.points,
-                    mode = uiState.mode,
-                    isTracking = uiState.isTracking,
-                    cameraPositionState = cameraPositionState,
-                    selectedMapType = uiState.selectedMapType,
-                    selectedPointIndex = uiState.selectedPointIndex,
-                    onMapClick = { latLng ->
-                        viewModel.addPoint(latLng)
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        // Collapse sheet to partial when user clicks map
-                        sheetScope.launch {
-                            scaffoldState.bottomSheetState.partialExpand()
-                        }
-                    },
-                    onPointClick = viewModel::selectPoint,
-                    onPointDragEnd = viewModel::updatePointPosition,
-                    onDeletePoint = { index ->
-                        viewModel.selectPoint(index)
-                        viewModel.deleteSelectedPoint()
-                    },
-                    isComplete = uiState.isComplete,
-                    isLocationPermissionGranted = locationPermissionsState.allPermissionsGranted,
-                    modifier = Modifier.fillMaxSize()
-            )
-
-            // Overlays: Top-Right
-            Column(
-                    modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd).padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(56.dp)
-            ) {
-                // Map Type Selector Button
-                FloatingActionButton(
-                        onClick = { showMapTypeDialog = true },
-                        containerColor = fabContainerColor,
-                        contentColor = fabContentColor,
-                        modifier =
-                                Modifier.size(56.dp)
-                                        .border(fabBorder, FloatingActionButtonDefaults.shape)
-                ) {
-                    Icon(
-                            androidx.compose.material.icons.Icons.Default.Layers,
-                            contentDescription = "Map Type"
-                    )
-                }
-
-                // My Location Button
-                FloatingActionButton(
-                        onClick = {
-                            if (locationPermissionsState.allPermissionsGranted) {
-                                try {
-                                    fusedLocationClient.lastLocation.addOnSuccessListener { location
-                                        ->
-                                        location?.let {
-                                            scope.launch {
-                                                cameraPositionState.animate(
-                                                        CameraUpdateFactory.newLatLngZoom(
-                                                                LatLng(it.latitude, it.longitude),
-                                                                19f
-                                                        )
-                                                )
-                                            }
-                                        }
-                                    }
-                                } catch (e: SecurityException) {
-                                    // Handled by permission check
-                                }
-                            } else if (locationPermissionsState.shouldShowRationale) {
-                                showRationale = true
-                            } else {
-                                // If not granted and no rationale, it could be the first time or permanently denied.
-                                // accompanist-permissions handles the first request naturally.
-                                // If it's already been requested and denied without rationale, it's permanently denied.
-                                val preferences = applicationContext.getSharedPreferences("prefs", android.content.Context.MODE_PRIVATE)
-                                val hasRequestedBefore = preferences.getBoolean("location_requested", false)
-                                
-                                if (hasRequestedBefore) {
-                                    showSettingsRedirect = true
-                                } else {
-                                    locationPermissionsState.launchMultiplePermissionRequest()
-                                    preferences.edit().putBoolean("location_requested", true).apply()
-                                }
+        Column(modifier = Modifier.fillMaxSize().padding(top = paddingValues.calculateTopPadding())) {
+            Box(modifier = Modifier.weight(1f)) {
+                // Map
+                MapContent(
+                        points = uiState.points,
+                        mode = uiState.mode,
+                        isTracking = uiState.isTracking,
+                        cameraPositionState = cameraPositionState,
+                        selectedMapType = uiState.selectedMapType,
+                        selectedPointIndex = uiState.selectedPointIndex,
+                        onMapClick = { latLng ->
+                            viewModel.addPoint(latLng)
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            // Collapse sheet to partial when user clicks map
+                            sheetScope.launch {
+                                scaffoldState.bottomSheetState.partialExpand()
                             }
                         },
-                        containerColor = fabContainerColor,
-                        contentColor = fabContentColor,
-                        modifier =
-                                Modifier.size(56.dp)
-                                        .border(fabBorder, FloatingActionButtonDefaults.shape)
+                        onPointClick = viewModel::selectPoint,
+                        onPointDragEnd = viewModel::updatePointPosition,
+                        onDeletePoint = { index ->
+                            viewModel.selectPoint(index)
+                            viewModel.deleteSelectedPoint()
+                        },
+                        isComplete = uiState.isComplete,
+                        isLocationPermissionGranted = locationPermissionsState.allPermissionsGranted,
+                        modifier = Modifier.fillMaxSize()
+                )
+
+                // Overlays: Top-Right
+                Column(
+                        modifier = Modifier.align(androidx.compose.ui.Alignment.TopEnd).padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(56.dp)
                 ) {
-                    Icon(
-                            androidx.compose.material.icons.Icons.Default.MyLocation,
-                            contentDescription = "My Location"
-                    )
-                }
-            }
-
-            // Overlays: Bottom-Right
-            Column(
-                    modifier =
-                            Modifier.align(androidx.compose.ui.Alignment.BottomEnd)
-                                    .padding(16.dp)
-                                    .padding(bottom = 120.dp), // Lift above bottom sheet peek
-                    horizontalAlignment = androidx.compose.ui.Alignment.End
-            ) {
-
-                // Save Button (Extended)
-                // When loading, hide Save until modified. In manual mode, show if valid polygon.
-                val showSave = if (uiState.isComplete) uiState.isModified else (uiState.points.size >= 3 && !uiState.isTracking)
-                if (showSave) {
-
+                    // Map Type Selector Button
                     FloatingActionButton(
-                            onClick = { showSaveDialog = true },
+                            onClick = { showMapTypeDialog = true },
                             containerColor = fabContainerColor,
                             contentColor = fabContentColor,
-                            modifier =
-                                    Modifier.border(
-                                            fabBorder,
-                                            FloatingActionButtonDefaults.extendedFabShape
-                                    )
-                    ) { Icon(Icons.Default.Save, contentDescription = "Save") }
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // Undo Button (when no point is selected)
-                // When loading, hide Undo until modified. In manual mode, show if points exist.
-                val showUndo = if (uiState.isComplete) uiState.isModified else (uiState.points.isNotEmpty() && uiState.selectedPointIndex == null)
-                if (showUndo) {
-                    FloatingActionButton(
-                            onClick = viewModel::undo,
-                            containerColor = fabContainerColor,
-                            contentColor = fabContentColor,
-                            modifier =
-                                    Modifier.size(56.dp)
-                                            .border(fabBorder, FloatingActionButtonDefaults.shape)
-                    ) { Icon(Icons.Default.Undo, contentDescription = "Undo") }
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // Clear Button
-                if (uiState.points.isNotEmpty()) {
-                    FloatingActionButton(
-                            onClick = {
-                                viewModel.clearPoints()
-                                // Also focus back to user after clearing
-                                if (locationPermissionsState.allPermissionsGranted) {
-                                    try {
-                                        fusedLocationClient.lastLocation.addOnSuccessListener {
-                                                location ->
-                                            location?.let {
-                                                scope.launch {
-                                                    cameraPositionState.animate(
-                                                            CameraUpdateFactory.newLatLngZoom(
-                                                                    LatLng(
-                                                                            it.latitude,
-                                                                            it.longitude
-                                                                    ),
-                                                                    18f
-                                                            )
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    } catch (e: SecurityException) {}
-                                }
-                            },
-                            containerColor = fabContainerColor,
-                            contentColor = fabContentColor,
-                            modifier =
-                                    Modifier.size(56.dp)
-                                            .border(fabBorder, FloatingActionButtonDefaults.shape)
-                    ) { Icon(Icons.Default.Refresh, contentDescription = "Clear") }
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // Auto Mode Controls
-                if (uiState.mode == MeasureMode.AUTO) {
-                    FloatingActionButton(
-                            onClick = {
-                                if (uiState.isTracking) viewModel.stopTracking()
-                                else viewModel.startTracking()
-                            },
-                            containerColor = fabContainerColor,
-                            contentColor = if (uiState.isTracking) Color.Red else fabContentColor,
                             modifier =
                                     Modifier.size(56.dp)
                                             .border(fabBorder, FloatingActionButtonDefaults.shape)
                     ) {
                         Icon(
-                                imageVector =
-                                        if (uiState.isTracking) Icons.Default.Stop
-                                        else Icons.Default.PlayArrow,
-                                contentDescription =
-                                        if (uiState.isTracking) "Stop Tracking"
-                                        else "Start Tracking"
+                                androidx.compose.material.icons.Icons.Default.Layers,
+                                contentDescription = "Map Type"
+                        )
+                    }
+
+                    // My Location Button
+                    FloatingActionButton(
+                            onClick = {
+                                if (locationPermissionsState.allPermissionsGranted) {
+                                    try {
+                                        fusedLocationClient.lastLocation.addOnSuccessListener { location
+                                            ->
+                                            location?.let {
+                                                scope.launch {
+                                                    cameraPositionState.animate(
+                                                            CameraUpdateFactory.newLatLngZoom(
+                                                                    LatLng(it.latitude, it.longitude),
+                                                                    19f
+                                                            )
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    } catch (e: SecurityException) {
+                                        // Handled by permission check
+                                    }
+                                } else if (locationPermissionsState.shouldShowRationale) {
+                                    showRationale = true
+                                } else {
+                                    val preferences = applicationContext.getSharedPreferences("prefs", android.content.Context.MODE_PRIVATE)
+                                    val hasRequestedBefore = preferences.getBoolean("location_requested", false)
+                                    
+                                    if (hasRequestedBefore) {
+                                        showSettingsRedirect = true
+                                    } else {
+                                        locationPermissionsState.launchMultiplePermissionRequest()
+                                        preferences.edit().putBoolean("location_requested", true).apply()
+                                    }
+                                }
+                            },
+                            containerColor = fabContainerColor,
+                            contentColor = fabContentColor,
+                            modifier =
+                                    Modifier.size(56.dp)
+                                            .border(fabBorder, FloatingActionButtonDefaults.shape)
+                    ) {
+                        Icon(
+                                androidx.compose.material.icons.Icons.Default.MyLocation,
+                                contentDescription = "My Location"
                         )
                     }
                 }
-            }
+
+                // Overlays: Bottom-Right
+                Column(
+                        modifier =
+                                Modifier.align(androidx.compose.ui.Alignment.BottomEnd)
+                                        .padding(16.dp)
+                                        .padding(bottom = 120.dp), // Lift above bottom sheet peek
+                        horizontalAlignment = androidx.compose.ui.Alignment.End
+                ) {
+
+                    // Save Button (Extended)
+                    val showSave = if (uiState.isComplete) uiState.isModified else (uiState.points.size >= 3 && !uiState.isTracking)
+                    if (showSave) {
+                        FloatingActionButton(
+                                onClick = { showSaveDialog = true },
+                                containerColor = fabContainerColor,
+                                contentColor = fabContentColor,
+                                modifier =
+                                        Modifier.border(
+                                                fabBorder,
+                                                FloatingActionButtonDefaults.extendedFabShape
+                                        )
+                        ) { Icon(Icons.Default.Save, contentDescription = "Save") }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    // Undo Button
+                    val showUndo = if (uiState.isComplete) uiState.isModified else (uiState.points.isNotEmpty() && uiState.selectedPointIndex == null)
+                    if (showUndo) {
+                        FloatingActionButton(
+                                onClick = viewModel::undo,
+                                containerColor = fabContainerColor,
+                                contentColor = fabContentColor,
+                                modifier =
+                                        Modifier.size(56.dp)
+                                                .border(fabBorder, FloatingActionButtonDefaults.shape)
+                        ) { Icon(Icons.Default.Undo, contentDescription = "Undo") }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    // Clear Button
+                    if (uiState.points.isNotEmpty()) {
+                        FloatingActionButton(
+                                onClick = {
+                                    viewModel.clearPoints()
+                                    if (locationPermissionsState.allPermissionsGranted) {
+                                        try {
+                                            fusedLocationClient.lastLocation.addOnSuccessListener {
+                                                    location ->
+                                                location?.let {
+                                                    scope.launch {
+                                                        cameraPositionState.animate(
+                                                                CameraUpdateFactory.newLatLngZoom(
+                                                                        LatLng(
+                                                                                it.latitude,
+                                                                                it.longitude
+                                                                        ),
+                                                                        18f
+                                                                )
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        } catch (e: SecurityException) {}
+                                    }
+                                },
+                                containerColor = fabContainerColor,
+                                contentColor = fabContentColor,
+                                modifier =
+                                        Modifier.size(56.dp)
+                                                .border(fabBorder, FloatingActionButtonDefaults.shape)
+                        ) { Icon(Icons.Default.Refresh, contentDescription = "Clear") }
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+
+                    // Auto Mode Controls
+                    if (uiState.mode == MeasureMode.AUTO) {
+                        FloatingActionButton(
+                                onClick = {
+                                    if (uiState.isTracking) viewModel.stopTracking()
+                                    else viewModel.startTracking()
+                                },
+                                containerColor = fabContainerColor,
+                                contentColor = if (uiState.isTracking) Color.Red else fabContentColor,
+                                modifier =
+                                        Modifier.size(56.dp)
+                                                .border(fabBorder, FloatingActionButtonDefaults.shape)
+                        ) {
+                            Icon(
+                                    imageVector =
+                                            if (uiState.isTracking) Icons.Default.Stop
+                                            else Icons.Default.PlayArrow,
+                                    contentDescription =
+                                            if (uiState.isTracking) "Stop Tracking"
+                                            else "Start Tracking"
+                            )
+                        }
+                    }
+                }
+            } // End of Map Box
+            
+            // Banner Ad at the bottom
+            BannerAdView()
         }
     }
 
