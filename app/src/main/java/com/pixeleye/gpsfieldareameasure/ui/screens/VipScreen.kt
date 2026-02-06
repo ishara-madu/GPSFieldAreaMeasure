@@ -24,38 +24,27 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VipScreen(onBack: () -> Unit) {
+fun VipScreen(onBack: () -> Unit, viewModel: com.pixeleye.gpsfieldareameasure.viewmodel.MainViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
     val scrollState = rememberScrollState()
-    val packages = remember {
-        listOf(
-            VipPackage(
-                id = "weekly",
-                name = "Silver",
-                price = "$1.99",
-                duration = "Weekly",
-                features = listOf("Remove Ads", "Cloud Backup"),
-                isBestValue = false
-            ),
-            VipPackage(
-                id = "monthly",
-                name = "Gold",
-                price = "$4.99",
-                duration = "Monthly",
-                features = listOf("Remove Ads", "Cloud Backup", "Unlimited Points"),
-                isBestValue = true
-            ),
-            VipPackage(
-                id = "yearly",
-                name = "Platinum",
-                price = "$49.99",
-                duration = "Yearly",
-                features = listOf("All Features", "Priority Support"),
-                isBestValue = false
-            )
-        )
-    }
+    val packages by viewModel.vipPackages.collectAsState()
     
+    // Default fallback if loading or empty
+    val displayPackages = if (packages.isEmpty()) {
+       listOf(
+            VipPackage("weekly", "Silver", "$0.25", "Weekly", listOf("Remove Ads", "Cloud Backup"), false),
+            VipPackage("monthly", "Gold", "$0.75", "Monthly", listOf("Remove Ads", "Cloud Backup", "Unlimited Points"), true),
+            VipPackage("yearly", "Platinum", "$3.00", "Yearly", listOf("All Features", "Priority Support"), false)
+        )
+    } else packages
+
     var selectedPackageId by remember { mutableStateOf("monthly") }
+    // Update selected if not in list
+    LaunchedEffect(displayPackages) {
+        if (displayPackages.none { it.id == selectedPackageId }) {
+             selectedPackageId = displayPackages.find { it.isBestValue }?.id ?: displayPackages.firstOrNull()?.id ?: ""
+        }
+    }
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     
@@ -107,7 +96,7 @@ fun VipScreen(onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(24.dp))
             
             // Packages
-            packages.forEach { vipPackage ->
+            displayPackages.forEach { vipPackage ->
                 VipPackageCard(
                     pkg = vipPackage,
                     isSelected = selectedPackageId == vipPackage.id,
@@ -121,7 +110,7 @@ fun VipScreen(onBack: () -> Unit) {
             // Action Button
             Button(
                 onClick = { 
-                    val selected = packages.find { it.id == selectedPackageId }
+                    val selected = displayPackages.find { it.id == selectedPackageId }
                     scope.launch {
                          snackbarHostState.showSnackbar("Purchased ${selected?.name} plan!")
                     }

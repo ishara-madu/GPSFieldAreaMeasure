@@ -6,9 +6,12 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.WorkspacePremium
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,7 +34,12 @@ fun AreaTopBar(
         },
         actions = {
             IconButton(onClick = onNavigateToVip) {
-                Icon(Icons.Default.WorkspacePremium, contentDescription = "VIP", tint = MaterialTheme.colorScheme.onPrimary)
+                Icon(
+                    painter = androidx.compose.ui.res.painterResource(id = com.pixeleye.gpsfieldareameasure.R.drawable.vip),
+                    contentDescription = "VIP",
+                    tint = Color.Unspecified, // Use original image colors
+                    modifier = Modifier.size(32.dp)
+                )
             }
         },
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(

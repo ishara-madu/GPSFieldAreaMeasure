@@ -17,6 +17,8 @@ import com.pixeleye.gpsfieldareameasure.model.MeasurementUnit
 import com.pixeleye.gpsfieldareameasure.model.Point
 import com.pixeleye.gpsfieldareameasure.utils.FormatUtils
 import com.pixeleye.gpsfieldareameasure.utils.LocationClient
+import com.pixeleye.gpsfieldareameasure.billing.BillingManager
+import com.pixeleye.gpsfieldareameasure.model.VipPackage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,6 +60,9 @@ data class MainUiState(
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
+    
+    private val billingManager = BillingManager(application)
+    val vipPackages = billingManager.vipPackages
 
     private val locationClient by lazy { LocationClient(application) }
 

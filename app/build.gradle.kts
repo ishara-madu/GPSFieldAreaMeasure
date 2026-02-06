@@ -82,6 +82,8 @@ dependencies {
     // Extended Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
 
+    // Billing
+    implementation("com.android.billingclient:billing-ktx:6.0.1")
 
     // Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
